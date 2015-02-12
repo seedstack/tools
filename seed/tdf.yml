@@ -1,0 +1,12 @@
+- 
+  pre:
+    - AlwaysTrue
+  proc:
+    -
+      name: Insert
+      params: 
+        - "foo"
+    - 
+        name: Insert
+        params:
+            - "bar"
