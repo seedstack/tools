@@ -7,6 +7,6 @@
       params: 
         - "foo"
     - 
-        name: Insert
-        params:
-            - "bar"
+      name: Insert
+      params:
+        - "bar"

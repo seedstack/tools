@@ -25,10 +25,6 @@ func TestPrecondition(t *testing.T) {
 
 }
 
-func (c *Conditions) AlwaysTrue(fileName string, data []byte) bool {
-	return true
-}
-
 func (c *Conditions) AlwaysFalse(fileName string, data []byte) bool {
 	return false
 }
@@ -51,8 +47,4 @@ func TestProcedures(t *testing.T) {
 
 func (p *Procedures) DoNothing(dat []byte) []byte {
 	return dat
-}
-
-func (p *Procedures) Insert(dat []byte, s string) []byte {
-	return append(dat, []byte(s)...)
 }

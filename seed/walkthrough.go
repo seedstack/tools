@@ -14,17 +14,18 @@ import (
 	"fmt"
 )
 
-func walkthroughDir(dirPath string) []string {
+func walkthroughDir(transPath string, dirPath string) []string {
 	files, _ := ioutil.ReadDir(dirPath)
+	transPath = filepath.Clean(transPath)
 	var res []string
 	for _, f := range files {
 		fpath := filepath.Join(dirPath, f.Name())
 		if f.IsDir() {
-			rres := walkthroughDir(fpath)
+			rres := walkthroughDir(transPath, fpath)
 			for _, n := range rres {
 				res = append(res, n)
 			}
-		} else {
+		} else if filepath.Clean(fpath) != transPath {
 			res = append(res, fpath)
 		}
 	}

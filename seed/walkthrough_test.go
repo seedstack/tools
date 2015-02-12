@@ -17,7 +17,7 @@ var expectedCount = 6
 var expectedFile = filepath.FromSlash("../test/dir1/file21")
 
 func TestWalkthroughDir(t *testing.T) {
-	files := walkthroughDir("../test")
+	files := walkthroughDir("mydescriptionfile.yml", "../test")
 	if len(files) != expectedCount {
 		t.Errorf("Walkthrough expect %v files but found %v", expectedCount, len(files))
 	}

@@ -45,10 +45,12 @@ func applyProcs(data []byte, t Transformation) []byte {
 	return data
 }
 
-// func (c *Conditions) AlwaysTrue(fileName string, data []byte) bool {
-// 	return true
-// }
+// AlwaysTrue is a precondition which will be true for all the files
+func (c *Conditions) AlwaysTrue(fileName string, data []byte) bool {
+	return true
+}
 
-// func (p *Procedures) Insert(dat []byte, s string) []byte {
-// 	return append(dat, []byte(s)...)
-// }
+// Insert the string s at the end of the given data.
+func (p *Procedures) Insert(dat []byte, s string) []byte {
+	return append(dat, []byte(s)...)
+}
