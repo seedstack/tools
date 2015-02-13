@@ -10,6 +10,7 @@ package main
 
 import (
 	"reflect"
+	"strings"
 )
 
 // Conditions regroup all the precondition methods
@@ -45,12 +46,21 @@ func applyProcs(data []byte, t Transformation) []byte {
 	return data
 }
 
+// -----------------
+ 
 // AlwaysTrue is a precondition which will be true for all the files
 func (c *Conditions) AlwaysTrue(fileName string, data []byte) bool {
 	return true
 }
 
+// -----------------
+
 // Insert the string s at the end of the given data.
 func (p *Procedures) Insert(dat []byte, s string) []byte {
 	return append(dat, []byte(s)...)
+}
+
+// Replace the old string by the new one
+func (p *Procedure) Replace(dat []byte, old string, new string) []byte {
+	return []byte(strings.Replace(string(dat), old, new, -1))
 }
