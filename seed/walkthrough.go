@@ -24,7 +24,7 @@ func walkthroughDir(transPath string, dirPath string) []string {
 			for _, n := range rres {
 				res = append(res, n)
 			}
-		} else if fpath != transPath {
+		} else if filepath.Clean(fpath) != filepath.Clean(transPath) {
 			res = append(res, fpath)
 		}
 	}

@@ -38,3 +38,4 @@ get the transformation file from HTTP as follows.
 The following assumes you have "$GOPATH/bin" in your `PATH`
 
 */
+package main
