@@ -15,8 +15,7 @@ import (
 )
 
 func walkthroughDir(transPath string, dirPath string) []string {
-	files, _ := ioutil.ReadDir(dirPath)
-	transPath = filepath.Clean(transPath)
+	files, _ := ioutil.ReadDir(dirPath)	
 	var res []string
 	for _, f := range files {
 		fpath := filepath.Join(dirPath, f.Name())
@@ -25,7 +24,7 @@ func walkthroughDir(transPath string, dirPath string) []string {
 			for _, n := range rres {
 				res = append(res, n)
 			}
-		} else if filepath.Clean(fpath) != transPath {
+		} else if fpath != transPath {
 			res = append(res, fpath)
 		}
 	}
@@ -40,7 +39,7 @@ func processFiles(files []string, transformations []Transformation) {
 			if err != nil {
 				fmt.Printf("Error reading file %s\n", filePath)
 			}
-			var origDat []byte = data
+			var origDat = data
 			
 			for _, transf := range transformations {
 				if checkCondition(filePath, data, transf) {
@@ -57,7 +56,7 @@ func processFiles(files []string, transformations []Transformation) {
 			done <- "ok"
 		}(f)
 	}
-	for _, _ = range files {
+	for _ = range files {
 		<-done
 	}
 	fmt.Printf("Processed %v files\n", len(files))

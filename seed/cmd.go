@@ -43,6 +43,12 @@ func init() {
 }
 
 func main() {
+	if flag.Arg(0) == "fix" {
+		fix()
+	}
+}
+
+func fix() {
 	var dat []byte
 	var tdfPath string
 	
@@ -55,39 +61,40 @@ func main() {
 			log.Fatal(err)
 		}
 		if resp.StatusCode > 299 {
-			log.Fatalf("Error %v when fetching %s", resp.StatusCode, transPath)
+			log.Fatalf("Error %v when fetching %s\n", resp.StatusCode, transPath)
 		}
 
 		body, err2 := ioutil.ReadAll(resp.Body)
 		resp.Body.Close()
 		if err != nil {
-			log.Fatal(err2)
+			log.Fatal("Error reading http reponse.\n", err2)
 		}
 
 		dat = body
 	} else {
 		// get the tdf from the file system
+		absPath, errFilePath := filepath.Abs(transPath)
+		tdfPath = absPath
 
-		tdfPath, errFilePath := filepath.Abs(transPath)
 		if errFilePath != nil {
-			log.Fatal("Error constructing the file path.", errFilePath)
+			log.Fatal("Error constructing the file path.\n", errFilePath)
 		}
 		
 		bytes, err := ioutil.ReadFile(tdfPath)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("Unable to read the transformation description file.\n", err)
 		}
 		dat = bytes
 	}
 
+	fmt.Printf("Parse the transformation description file: %s.\n", transPath)
 	transf := parseTdf(dat)
-	fmt.Printf("Parsed the transformation description file from %s.\n", transPath)
 
 	// set the directory to parse if specified
-    if flag.Arg(0) != "" {
-		absPath, errFilePath := filepath.Abs(flag.Arg(0))
+    if flag.Arg(1) != "" {
+		absPath, errFilePath := filepath.Abs(flag.Arg(1))
 		if errFilePath != nil {
-			log.Fatal("Error constructing the file path.", errFilePath)
+			log.Fatal("Error constructing the file path.\n", errFilePath)
 		}
 		dirPath = absPath
 	}
