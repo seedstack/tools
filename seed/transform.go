@@ -11,6 +11,8 @@ package main
 import (
 	"reflect"
 	"strings"
+	"path/filepath"
+	"log"
 )
 
 // Conditions regroup all the precondition methods
@@ -19,12 +21,28 @@ type Conditions struct {}
 // Procedures regroup all the procedure methods
 type Procedures struct {}
 
+func checkFileName(fileName string, t Transformation) bool {
+	matched := false
+	for _, patt := range strings.Split(t.File, "|") {
+		res, err := filepath.Match(patt, filepath.Base(fileName))
+		matched = res || matched
+		if err != nil {
+			log.Fatalf("Failed to parse pattern: %s\n", t.File, err)
+		}
+	}
+	return matched
+}
+
 func checkCondition(fileName string, data []byte, t Transformation) bool {
 	ok := true
 	var c Conditions
 	for _, pre := range t.Pre {
 		m := reflect.ValueOf(&c).MethodByName(pre)
-		ok = m.Call([]reflect.Value{reflect.ValueOf(fileName), reflect.ValueOf(data)})[0].Bool()
+		if m.IsValid() {
+			ok = m.Call([]reflect.Value{reflect.ValueOf(fileName), reflect.ValueOf(data)})[0].Bool()
+		} else {
+			log.Fatalf(`Cannot find the precondition method "%s"`, pre)
+		}
 		if !ok {
 			break
 		}
@@ -39,9 +57,8 @@ func applyProcs(data []byte, t Transformation) []byte {
 		for _, param := range proc.Params {
 			vals = append(vals, reflect.ValueOf(param))
 		}
-		
-		data = reflect.ValueOf(&p).MethodByName(proc.Name).
-			Call(vals)[0].Bytes()
+		m := reflect.ValueOf(&p).MethodByName(proc.Name)
+		data = m.Call(vals)[0].Bytes()
 	}
 	return data
 }
@@ -61,6 +78,6 @@ func (p *Procedures) Insert(dat []byte, s string) []byte {
 }
 
 // Replace the old string by the new one
-func (p *Procedure) Replace(dat []byte, old string, new string) []byte {
+func (p *Procedures) Replace(dat []byte, old string, new string) []byte {
 	return []byte(strings.Replace(string(dat), old, new, -1))
 }

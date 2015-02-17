@@ -22,6 +22,7 @@ import (
 // Transformation is a strutucture representating a set 
 // of procedure to apply on a source code directory
 type Transformation struct {
+	File string
 	Pre []string
 	Proc []Procedure
 }

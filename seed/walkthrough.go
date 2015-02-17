@@ -32,32 +32,52 @@ func walkthroughDir(transPath string, dirPath string) []string {
 }
 
 func processFiles(files []string, transformations []Transformation) {
+	first := true
 	done := make(chan string, len(files))
+	
 	for _, f := range files {
 		go func(filePath string) {
-			data, err := ioutil.ReadFile(filePath)
-			if err != nil {
-				fmt.Printf("Error reading file %s\n", filePath)
-			}
-			var origDat = data
-			
-			for _, transf := range transformations {
-				if checkCondition(filePath, data, transf) {
-					data = applyProcs(data, transf)
-				}
-			}
+			origDat, data := processFile(filePath, transformations)
 			if len(origDat) != len(data) {
+				if first {
+					fmt.Println("Apply transformations:")
+					first = false
+				}
 				err := ioutil.WriteFile(filePath, data, 0644)
 				if err != nil {
 					fmt.Printf("Error writting file %s\n", filePath)
 				}
-				fmt.Printf("Applied %v transformation on file %s\n", len(transformations), filePath)
+				fmt.Printf("%s\n", filePath)
 			}
+			
 			done <- "ok"
 		}(f)
 	}
+	
 	for _ = range files {
 		<-done
 	}
 	fmt.Printf("Processed %v files\n", len(files))
+}
+
+func processFile(filePath string, transformations []Transformation) ([]byte, []byte) {
+	var origDat []byte
+	var data []byte
+	for _, transf := range transformations {
+		if checkFileName(filePath, transf) {
+			if len(origDat) == 0 {
+				dat, err := ioutil.ReadFile(filePath)
+				if err != nil {
+					fmt.Printf("Error reading file %s\n", filePath)
+				}
+				data = dat
+				origDat = dat
+			}
+			
+			if checkCondition(filePath, data, transf) {
+				data = applyProcs(data, transf)
+			}
+		}
+	}
+	return origDat, data
 }

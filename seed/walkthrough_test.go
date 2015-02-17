@@ -26,3 +26,18 @@ func TestWalkthroughDir(t *testing.T) {
 		t.Errorf("Walkthrough expect %v but found %v", expectedFile, files[0])
 	}
 }
+
+func TestProcessFiles(t *testing.T) {
+	tt := Transformation{File: "*file1", Proc: []Procedure{Procedure{Name: "Insert", Params: []string{"foo"}}}}
+	tf := Transformation{File: "*.go", Proc: []Procedure{Procedure{Name: "Insert", Params: []string{"foo"}}}}
+
+	orig, dat := processFile("../test/file1", []Transformation{tt})
+	if string(orig) == string(dat) {
+		t.Error("file1 should be processed.")
+	}
+
+	orig, dat = processFile("../test/file1", []Transformation{tf})
+	if string(orig) != string(dat) {
+		t.Error("file1 should not be processed.")
+	}
+}
