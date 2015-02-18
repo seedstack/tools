@@ -21,13 +21,14 @@ type Conditions struct {}
 // Procedures regroup all the procedure methods
 type Procedures struct {}
 
-func checkFileName(fileName string, t Transformation) bool {
+func checkFileName(fileName string, tr Transformation) bool {
 	matched := false
-	for _, patt := range strings.Split(t.File, "|") {
+	// Include files
+	for _, patt := range strings.Split(tr.Filter, "|") {
 		res, err := filepath.Match(patt, filepath.Base(fileName))
 		matched = res || matched
 		if err != nil {
-			log.Fatalf("Failed to parse pattern: %s\n", t.File, err)
+			log.Fatalf("Failed to parse pattern: %s\n%v", tr.Filter, err)
 		}
 	}
 	return matched

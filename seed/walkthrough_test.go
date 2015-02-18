@@ -16,27 +16,33 @@ import (
 var expectedCount = 6
 var expectedFile = filepath.FromSlash("../test/dir1/file21")
 
-func TestWalkthroughDir(t *testing.T) {
-	files := walkthroughDir("../test/tdf.yml", "../test")
+func TestWalkDir(t *testing.T) {
+	files := walkDir("../test", "", "../test/tdf.yml")
 	if len(files) != expectedCount {
-		t.Errorf("Walkthrough expect %v files but found %v", expectedCount, len(files))
+		t.Errorf("WalkDir expect %v files but found %v", expectedCount, len(files))
 	}
 	
 	if files[0] != expectedFile {
-		t.Errorf("Walkthrough expect %v but found %v", expectedFile, files[0])
+		t.Errorf("WalkDir expect %v but found %v", expectedFile, files[0])
+	}
+
+	files = walkDir("../test", "test", "../test/tdf.yml")
+	if len(files) != 0 {
+		t.Errorf("WalkDir expect %v files but found %v", 0, len(files))
 	}
 }
 
 func TestProcessFiles(t *testing.T) {
-	tt := Transformation{File: "*file1", Proc: []Procedure{Procedure{Name: "Insert", Params: []string{"foo"}}}}
-	tf := Transformation{File: "*.go", Proc: []Procedure{Procedure{Name: "Insert", Params: []string{"foo"}}}}
+	p := []Procedure{Procedure{Name: "Insert", Params: []string{"foo"}}}
+	tt := Transformation{Filter: "*file1", Proc: p}
+	tf := Transformation{Filter: "*.go", Proc: p}
 
-	orig, dat := processFile("../test/file1", []Transformation{tt})
+	orig, dat := processFile("../test/file1", T{Transformations: []Transformation{tt}})
 	if string(orig) == string(dat) {
 		t.Error("file1 should be processed.")
 	}
 
-	orig, dat = processFile("../test/file1", []Transformation{tf})
+	orig, dat = processFile("../test/file1", T{Transformations: []Transformation{tf}})
 	if string(orig) != string(dat) {
 		t.Error("file1 should not be processed.")
 	}

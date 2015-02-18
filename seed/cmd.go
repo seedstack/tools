@@ -17,12 +17,20 @@ import (
 	"strings"
 	"net/http"
 	"log"
+	"time"
 )
+
+// T correspond to the content of a transformation file.
+// It contains exclude directories and an array of transformations.
+type T struct {
+	Exclude string
+	Transformations []Transformation
+}
 
 // Transformation is a strutucture representating a set 
 // of procedure to apply on a source code directory
 type Transformation struct {
-	File string
+	Filter string
 	Pre []string
 	Proc []Procedure
 }
@@ -35,21 +43,70 @@ type Procedure struct {
 }
 
 var transPath string
+var verbose bool
 var dirPath = "./"
 
 func init() {
 	flag.StringVar(&transPath, "t", "./tdf.yml", "Specify the path to the transformation description file")
-	
+	flag.BoolVar(&verbose, "v", false, "Enable verbose mode.")
 	flag.Parse()
 }
 
 func main() {
 	if flag.Arg(0) == "fix" {
 		fix()
+	} else if flag.Arg(0) == "help" {
+		if flag.Arg(1) == "fix" {
+			fmt.Println(`Fix the files in a given directory based on a YAML transformation description file. 
+If no directory is passed as argument, the transformations will be applied on current directory.
+
+Usage: 
+  seed [flags] fix [directory/to/transform]
+
+Available flags:
+ -t file/path.yml: the YAML transformation description file
+
+YAML transformation description file format:
+
+The description file accepts a list of transformation. Each transformation can have include files or exclude directories. 
+It can also use higher level preconditions with "pre" which uses the file content. Finally, it takes a list of procedure to apply the file. 
+Procedures are described with their name and the arguments to pass. See the following 'tdf.yaml' file as example. 
+
+tdf.yml
+----------------
+- 
+ Include: "*.go|*.yml"
+ Exclude: "*.out"
+ pre: 
+  - AlwaysTrue
+  - ...
+ proc:
+  - Replace
+   Name: Replace
+   Params:
+    - "old"
+    - "new"
+  - ...
+-
+ ...
+----------------
+`)
+		}
+	} else {
+		fmt.Println(`Usage: seed <command> <args>
+
+Commands:
+    fix    Apply source transformation on a directory, based on a YAML transformation file
+    help   Provide help for seed commands 
+
+See 'seed help <command>' to read about a specific subcommand.
+`)
 	}
 }
 
 func fix() {
+	start := time.Now()
+	
 	var dat []byte
 	var tdfPath string
 	
@@ -87,8 +144,10 @@ func fix() {
 		}
 		dat = bytes
 	}
-
-	fmt.Printf("Parse the transformation description file: %s.\n", transPath)
+	
+	if verbose {
+		fmt.Printf("Parse the transformation description file: %s.\n", transPath)
+	}
 	transf := parseTdf(dat)
 
 	// set the directory to parse if specified
@@ -100,15 +159,17 @@ func fix() {
 		dirPath = absPath
 	}
 
-	processFiles(walkthroughDir(tdfPath, dirPath), transf)
+	count := processFiles(walkDir(dirPath, transf.Exclude, tdfPath), transf)
+	
+	elapsed := time.Since(start)
+    fmt.Printf("%s %s fixed: %v files\n", filepath.Base(dirPath), elapsed, count)
 }
 
-func parseTdf(dat []byte) []Transformation {
-	var transf []Transformation
-	err := yaml.Unmarshal(dat, &transf)
+func parseTdf(dat []byte) T {
+	var t T
+	err := yaml.Unmarshal(dat, &t)
 	if err != nil {
 		log.Fatal("Failed to parse the transformation description file.\n", err)
 	}
-
-	return transf
+	return t
 }

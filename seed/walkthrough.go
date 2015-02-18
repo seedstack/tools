@@ -12,42 +12,53 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"fmt"
+	"log"
+	"strings"
+	"os"
 )
 
-func walkthroughDir(transPath string, dirPath string) []string {
-	files, _ := ioutil.ReadDir(dirPath)	
-	var res []string
-	for _, f := range files {
-		fpath := filepath.Join(dirPath, f.Name())
-		if f.IsDir() {
-			rres := walkthroughDir(transPath, fpath)
-			for _, n := range rres {
-				res = append(res, n)
+func walkDir(root string, excludes string, tdfPath string) []string {
+	var files []string
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() {
+			if strings.Contains(excludes, info.Name()) {
+				return filepath.SkipDir
 			}
-		} else if filepath.Clean(fpath) != filepath.Clean(transPath) {
-			res = append(res, fpath)
+		} else {
+			if info.Name() != filepath.Base(tdfPath) {
+				files = append(files, path)
+			}
 		}
+		
+		return err
+	})
+	if err != nil {
+		log.Fatalf("Problem walking to the file or directory:\n %v\n", err)
 	}
-	return res
+	return files
 }
 
-func processFiles(files []string, transformations []Transformation) {
+func processFiles(files []string, transformations T) int {
 	first := true
+	count := 0
 	done := make(chan string, len(files))
 	
 	for _, f := range files {
 		go func(filePath string) {
 			origDat, data := processFile(filePath, transformations)
 			if len(origDat) != len(data) {
-				if first {
+				if first && verbose {
 					fmt.Println("Apply transformations:")
 					first = false
 				}
 				err := ioutil.WriteFile(filePath, data, 0644)
+				count++
 				if err != nil {
 					fmt.Printf("Error writting file %s\n", filePath)
 				}
-				fmt.Printf("%s\n", filePath)
+				if verbose {
+					fmt.Printf("%s\n", filePath)
+				}
 			}
 			
 			done <- "ok"
@@ -57,13 +68,16 @@ func processFiles(files []string, transformations []Transformation) {
 	for _ = range files {
 		<-done
 	}
-	fmt.Printf("Processed %v files\n", len(files))
+	if verbose {
+		fmt.Printf("Checked %v files\n", len(files))
+	}
+	return count
 }
 
-func processFile(filePath string, transformations []Transformation) ([]byte, []byte) {
+func processFile(filePath string, t T) ([]byte, []byte) {
 	var origDat []byte
 	var data []byte
-	for _, transf := range transformations {
+	for _, transf := range t.Transformations {
 		if checkFileName(filePath, transf) {
 			if len(origDat) == 0 {
 				dat, err := ioutil.ReadFile(filePath)
