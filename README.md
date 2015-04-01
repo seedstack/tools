@@ -1,4 +1,4 @@
-# SeedStack tools [![Build status](https://travis-ci.org/seedstack/tools.svg?branch=master)](https://travis-ci.org/seedstack/tools)
+# SeedStack tools [![Build status](https://travis-ci.org/seedstack/tools.svg?branch=master)](https://travis-ci.org/seedstack/tools) [![Stories in Ready](https://badge.waffle.io/seedstack/tools.png?label=ready&title=Ready)](https://waffle.io/seedstack/tools)
 
 Tool to perform common tasks on SEED projects.
 
