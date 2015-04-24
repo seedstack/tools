@@ -5,7 +5,7 @@ Tool to perform common tasks on SEED projects.
 # Install
 
 ```bash
-go get github.com/seedstack/tools
+go get github.com/seedstack/tools/seed
 ```
 
 The following assumes you have Go properly installed and that you have `$GOPATH/bin` in your `PATH`.
