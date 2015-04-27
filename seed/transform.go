@@ -79,6 +79,9 @@ func (p *Procedures) Insert(dat []byte, s string) []byte {
 }
 
 // Replace the old string by the new one
-func (p *Procedures) Replace(dat []byte, old string, new string) []byte {
-	return []byte(strings.Replace(string(dat), old, new, -1))
+func (p *Procedures) Replace(dat []byte, pairs ...string) []byte {
+	for i := 0; i < len(pairs); i += 2 {
+		dat = []byte(strings.Replace(string(dat), pairs[i], pairs[i+1], -1))
+	}
+	return dat
 }

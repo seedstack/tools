@@ -69,9 +69,9 @@ func (p *Procedures) DoNothing(dat []byte) []byte {
 
 func TestReplace(t *testing.T) {
 	var p *Procedures
-	news := string(p.Replace([]byte("foo"), "foo", "bar"))
-	if news != "bar" {
-		t.Errorf("Procedure should replace 'foo' with 'bar' but %s was found\n", news)
+	news := string(p.Replace([]byte("foo"), "foo", "bar", "bar", "toto"))
+	if news != "toto" {
+		t.Errorf("Procedure should replace 'foo' with 'toto' but %s was found\n", news)
 	}
 }
 
