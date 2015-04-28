@@ -12,7 +12,7 @@ Perform common tasks on SEED projects.
 
 Install
 
-        go get github.com/seedstack/tools
+        go get github.com/seedstack/tools/seed
 
 The following assumes you have Go properly installed.
 

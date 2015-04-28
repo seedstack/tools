@@ -9,12 +9,12 @@
 package main
 
 import (
-	"io/ioutil"
-	"path/filepath"
 	"fmt"
+	"io/ioutil"
 	"log"
-	"strings"
 	"os"
+	"path/filepath"
+	"strings"
 )
 
 func walkDir(root string, excludes string, tdfPath string) []string {
@@ -29,7 +29,7 @@ func walkDir(root string, excludes string, tdfPath string) []string {
 				files = append(files, path)
 			}
 		}
-		
+
 		return err
 	})
 	if err != nil {
@@ -42,7 +42,7 @@ func processFiles(files []string, transformations T) int {
 	first := true
 	count := 0
 	done := make(chan string, len(files))
-	
+
 	for _, f := range files {
 		go func(filePath string) {
 			origDat, data := processFile(filePath, transformations)
@@ -60,11 +60,11 @@ func processFiles(files []string, transformations T) int {
 					fmt.Printf("%s\n", filePath)
 				}
 			}
-			
+
 			done <- "ok"
 		}(f)
 	}
-	
+
 	for _ = range files {
 		<-done
 	}
@@ -87,7 +87,7 @@ func processFile(filePath string, t T) ([]byte, []byte) {
 				data = dat
 				origDat = dat
 			}
-			
+
 			if checkCondition(filePath, data, transf) {
 				data = applyProcs(data, transf)
 			}

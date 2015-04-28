@@ -9,8 +9,8 @@
 package main
 
 import (
-	"testing"
 	"path/filepath"
+	"testing"
 )
 
 var expectedCount = 6
@@ -21,7 +21,7 @@ func TestWalkDir(t *testing.T) {
 	if len(files) != expectedCount {
 		t.Errorf("WalkDir expect %v files but found %v", expectedCount, len(files))
 	}
-	
+
 	if files[0] != expectedFile {
 		t.Errorf("WalkDir expect %v but found %v", expectedFile, files[0])
 	}

@@ -9,36 +9,36 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"gopkg.in/yaml.v2"
-	"path/filepath"
-	"flag"
 	"io/ioutil"
-	"strings"
-	"net/http"
 	"log"
+	"net/http"
+	"path/filepath"
+	"strings"
 	"time"
 )
 
 // T correspond to the content of a transformation file.
 // It contains exclude directories and an array of transformations.
 type T struct {
-	Exclude string
+	Exclude         string
 	Transformations []Transformation
 }
 
-// Transformation is a strutucture representating a set 
+// Transformation is a strutucture representating a set
 // of procedure to apply on a source code directory
 type Transformation struct {
 	Filter string
-	Pre []string
-	Proc []Procedure
+	Pre    []string
+	Proc   []Procedure
 }
 
-// Procedure is a function call with a method name and 
+// Procedure is a function call with a method name and
 // its parameters
 type Procedure struct {
-	Name string
+	Name   string
 	Params []string
 }
 
@@ -106,11 +106,11 @@ See 'seed help <command>' to read about a specific subcommand.
 
 func fix() {
 	start := time.Now()
-	
+
 	var dat []byte
 	var tdfPath string
-	
-	if transPath != strings.TrimPrefix(transPath, "http://") || 
+
+	if transPath != strings.TrimPrefix(transPath, "http://") ||
 		transPath != strings.TrimPrefix(transPath, "https://") {
 		// get the transformation description file from internet
 
@@ -137,21 +137,21 @@ func fix() {
 		if errFilePath != nil {
 			log.Fatal("Error constructing the file path.\n", errFilePath)
 		}
-		
+
 		bytes, err := ioutil.ReadFile(tdfPath)
 		if err != nil {
 			log.Fatal("Unable to read the transformation description file.\n", err)
 		}
 		dat = bytes
 	}
-	
+
 	if verbose {
 		fmt.Printf("Parse the transformation description file: %s.\n", transPath)
 	}
 	transf := parseTdf(dat)
 
 	// set the directory to parse if specified
-    if flag.Arg(1) != "" {
+	if flag.Arg(1) != "" {
 		absPath, errFilePath := filepath.Abs(flag.Arg(1))
 		if errFilePath != nil {
 			log.Fatal("Error constructing the file path.\n", errFilePath)
@@ -160,9 +160,9 @@ func fix() {
 	}
 
 	count := processFiles(walkDir(dirPath, transf.Exclude, tdfPath), transf)
-	
+
 	elapsed := time.Since(start)
-    fmt.Printf("%s %s fixed: %v files\n", filepath.Base(dirPath), elapsed, count)
+	fmt.Printf("%s %s fixed: %v files\n", filepath.Base(dirPath), elapsed, count)
 }
 
 func parseTdf(dat []byte) T {

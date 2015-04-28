@@ -32,7 +32,6 @@ transformations:
    - name: DoNothing
 `
 
-
 func TestParseTdf(t *testing.T) {
 	tr := parseTdf([]byte(tdfYml))
 
@@ -44,7 +43,7 @@ func TestParseTdf(t *testing.T) {
 	}
 
 	tranf := tr.Transformations[0]
-	
+
 	if tranf.Filter != "*.go|*.yml" {
 		t.Error("The first transformation should contains include files.")
 	}

@@ -9,13 +9,14 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 )
 
 func TestPrecondition(t *testing.T) {
 	tt := Transformation{Pre: []string{"AlwaysTrue"}}
-	tf := Transformation{Pre: []string{"AlwaysFalse"}}	
-	
+	tf := Transformation{Pre: []string{"AlwaysFalse"}}
+
 	if !checkCondition("", []byte{}, tt) {
 		t.Error("Precondition should be always true")
 	}
@@ -32,20 +33,19 @@ func (c *Conditions) AlwaysFalse(fileName string, data []byte) bool {
 func TestFile(t *testing.T) {
 	tg := Transformation{Filter: "*.go"}
 	tgy := Transformation{Filter: "*.go|*.yml"}
-	matched := checkFileName("test\\src\\bla\\bla\\cmd.go", tg) && 
+	matched := checkFileName("test\\src\\bla\\bla\\cmd.go", tg) &&
 		!checkFileName("./test/bloat.java.", tg)
 	if !matched {
 		t.Errorf("The file ./test/cmd.go should match the pattern '*.go' but not 'bloat.java'")
 	}
 
-	matched = checkFileName("./test/cmd.go", tgy) && 
-			checkFileName("./test/conf.yml", tgy) && 
-			!checkFileName("./test/bloat.java.", tgy)
+	matched = checkFileName("./test/cmd.go", tgy) &&
+		checkFileName("./test/conf.yml", tgy) &&
+		!checkFileName("./test/bloat.java.", tgy)
 	if !matched {
 		t.Errorf("The file 'cmd.go' and 'conf.yml' should match the pattern '*.go|*.yml' but not 'bloat.java'")
 	}
 }
-
 
 func TestProcedures(t *testing.T) {
 	tn := Transformation{Proc: []Procedure{Procedure{Name: "DoNothing"}}}
@@ -75,3 +75,88 @@ func TestReplace(t *testing.T) {
 	}
 }
 
+func TestReplaceMavenDependency(t *testing.T) {
+	var p *Procedures
+	news := string(p.ReplaceMavenDependency([]byte(pom), "com.inetpsa.fnd:seed-bom", "org.seedstack:bom", "org.seedstack:bom", "org.seedstack:seedstack-bom"))
+	if news != expectedPom {
+		t.Errorf("Procedure should replace 'com.inetpsa.fnd:seed-bom' with 'org.seedstack:seedstack-bom' but found:\n %s", news)
+	}
+}
+
+var pom = `
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- SEED Distribution BOM-->
+            <dependency>
+                <groupId>com.inetpsa.fnd</groupId>  <!-- test ->
+               <artifactId>seed-bom</artifactId>
+                <version>14.11</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+`
+
+var expectedPom = `
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- SEED Distribution BOM-->
+            <dependency>
+                <groupId>org.seedstack</groupId>  <!-- test ->
+               <artifactId>seedstack-bom</artifactId>
+                <version>14.11</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+`
+
+func TestMatchDependency(t *testing.T) {
+	old := "com.inetpsa.fnd:seed-bom"
+	new := "org.seedstack:seedstack-bom"
+
+	result := matchDependency(pom, old, new)
+	if result != expectedPom {
+		fmt.Println("found:\n" + result)
+		t.Error("Fail to replace maven dependency")
+	}
+}
+
+var expectedPomWithVersion = `
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- SEED Distribution BOM-->
+            <dependency>
+                <groupId>org.seedstack</groupId>  <!-- test ->
+               <artifactId>seedstack-bom</artifactId>
+                <version>15.4-M2-SNAPSHOT</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+`
+
+func TestMatchDependencyWithVersion(t *testing.T) {
+	old := "com.inetpsa.fnd:seed-bom:14.11"
+	new := "org.seedstack:seedstack-bom:15.4-M2-SNAPSHOT"
+
+	result := matchDependencyWithVersion(pom, old, new)
+	if result != expectedPomWithVersion {
+		fmt.Println("found:\n" + result)
+		t.Error("Fail to replace maven dependency with version")
+	}
+}
+
+func TestReplaceMavenDependencyWithVersion(t *testing.T) {
+	var p *Procedures
+	news := string(p.ReplaceMavenDependencyWithVersion([]byte(pom), "com.inetpsa.fnd:seed-bom:14.11", "org.seedstack:bom:15.4", "org.seedstack:bom:15.4", "org.seedstack:seedstack-bom:15.4-M2-SNAPSHOT"))
+	if news != expectedPomWithVersion {
+		t.Errorf("Procedure should replace 'com.inetpsa.fnd:seed-bom:14.11' with 'org.seedstack:seedstack-bom:15.4-M2-SNAPSHOT' but found:\n %s", news)
+	}
+}
