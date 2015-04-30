@@ -89,7 +89,7 @@ func processFiles(files []string, transformations T) int {
 	for _ = range files {
 		<-done
 	}
-	if verbose {
+	if vverbose {
 		fmt.Printf("---\n\nChecked %v files\n\n", len(files))
 	}
 	return count
