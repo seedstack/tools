@@ -44,12 +44,18 @@ type Procedure struct {
 
 var transPath string
 var verbose bool
+var vverbose bool
 var dirPath = "./"
 
 func init() {
 	flag.StringVar(&transPath, "t", "./tdf.yml", "Specify the path to the transformation description file")
 	flag.BoolVar(&verbose, "v", false, "Enable verbose mode.")
+	flag.BoolVar(&vverbose, "vv", false, "Enable very verbose mode.")
 	flag.Parse()
+	
+	if vverbose {
+		verbose = true
+	}
 }
 
 func main() {
@@ -146,7 +152,7 @@ func fix() {
 	}
 
 	if verbose {
-		fmt.Printf("Parse the transformation description file: %s.\n", transPath)
+		fmt.Printf("Parse the transformation description file: %s.\n\n---\n", transPath)
 	}
 	transf := parseTdf(dat)
 

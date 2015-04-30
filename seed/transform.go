@@ -14,6 +14,8 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+	"bytes"
+	"fmt"
 )
 
 // Conditions regroup all the precondition methods
@@ -78,19 +80,59 @@ func (c *Conditions) AlwaysTrue(fileName string, data []byte) bool {
 // -----------------
 
 // Insert the string s at the end of the given data.
+// 
+// proc:
+//  -
+//    name: Insert
+//    params: "endOfFile"
 func (p *Procedures) Insert(dat []byte, s string) []byte {
 	return append(dat, []byte(s)...)
 }
 
-// Replace the old string by the new one.
+// Replace the old string by the new one. You can use it as follows in your transformation file.
+// 
+// proc:
+//  -
+//    name: Replace
+//    params:
+//      - "myStringToModify"
+//      - "myModifiedString"
+//      # After you can add other pairs
+//      - "x"
+//      - "y"
+//      ...
 func (p *Procedures) Replace(dat []byte, pairs ...string) []byte {
+	new := dat
 	for i := 0; i < len(pairs); i += 2 {
-		dat = []byte(strings.Replace(string(dat), pairs[i], pairs[i+1], -1))
+		new = []byte(strings.Replace(string(new), pairs[i], pairs[i+1], -1))
+		if vverbose && bytes.Compare(new, dat) != 0 {
+			fmt.Printf("\t%s -> %s\n", pairs[i], pairs[i+1])
+		}
 	}
-	return dat
+
+	return new
 }
 
 // ReplaceMavenDependency replaces a maven dependency by a new one.
+// The dependency to update are passed as pairs. For instance you want to update the following dependency:
+//
+// <dependency>
+//   <groupId>org.mycompany</groupId>
+//   <artifactId>myApp1</artifactId>
+// </dependency>
+//
+// Call the ReplaceMavenDependency with a pair of the old dependency and the new one.
+// 
+// proc:
+//  -
+//    name: ReplaceMavenDependency
+//    params:
+//      - "org.mycompany:myApp1"
+//      - "com.mycompany:myApp2"
+//      # After you can add other pairs
+//      - "x:x"
+//      - "y:y"
+//      ...
 func (p *Procedures) ReplaceMavenDependency(data []byte, pairs ...string) []byte {
 	for i := 0; i < len(pairs); i += 2 {
 		data = []byte(matchDependency(string(data), pairs[i], pairs[i+1]))
@@ -99,6 +141,26 @@ func (p *Procedures) ReplaceMavenDependency(data []byte, pairs ...string) []byte
 }
 
 // ReplaceMavenDependencyWithVersion replaces a maven dependency by a new one including the version tag.
+// The dependency to update are passed as pairs. For instance you want to update the following dependency:
+//
+// <dependency>
+//   <groupId>org.mycompany</groupId>
+//   <artifactId>myApp1</artifactId>
+//   <version>1.0.0</version>
+// </dependency>
+//
+// Call the ReplaceMavenDependencyWithVersion with a pair of the old dependency and the new one.
+// 
+// proc:
+//  -
+//    name: ReplaceMavenDependencyWithVersion
+//    params:
+//      - "org.mycompany:myApp1:1.0.0"
+//      - "com.mycompany:myApp2:2.0.0"
+//      # After you can add other pairs
+//      - "x:x:x"
+//      - "y:y:y"
+//      ...
 func (p *Procedures) ReplaceMavenDependencyWithVersion(data []byte, pairs ...string) []byte {
 	for i := 0; i < len(pairs); i += 2 {
 		data = []byte(matchDependencyWithVersion(string(data), pairs[i], pairs[i+1]))
@@ -109,6 +171,11 @@ func (p *Procedures) ReplaceMavenDependencyWithVersion(data []byte, pairs ...str
 func matchDependencyWithVersion(pom, old, new string) string {
 	currentDep := strings.Split(old, ":")
 	newDep := strings.Split(new, ":")
+	
+	if len(currentDep) != 3 && len(newDep) != 3 {
+		log.Fatalf(`ReplaceMavenDependencyWithVersion takes dependencies with` + 
+			` the following format "groupId:artifactId:vesion". But "%s" and "%s" where found.`, old, new)
+	}
 
 	regex := "(<groupId>)" + currentDep[0] + "(<\\/groupId>.*?\\n.*?" +
 		"<artifactId>)" + currentDep[1] + "(<\\/artifactId>.*?\\n.*?" +
@@ -122,6 +189,11 @@ func matchDependencyWithVersion(pom, old, new string) string {
 func matchDependency(pom, old, new string) string {
 	currentDep := strings.Split(old, ":")
 	newDep := strings.Split(new, ":")
+
+	if len(currentDep) != 2 && len(newDep) != 2 {
+		log.Fatalf(`ReplaceMavenDependencyWithVersion takes dependencies with` + 
+			` the following format "groupId:artifactId". But "%s" and "%s" where found.`, old, new)
+	}
 
 	regex := "(<groupId>)" + currentDep[0] + "(<\\/groupId>.*?\\n.*?" +
 		"<artifactId>)" + currentDep[1] + "(<\\/artifactId>)"

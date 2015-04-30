@@ -15,6 +15,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"bytes"
 )
 
 func walkDir(root string, excludes string, tdfPath string) []string {
@@ -38,27 +39,47 @@ func walkDir(root string, excludes string, tdfPath string) []string {
 	return files
 }
 
+func shortPath(path string) string {
+	wd, err :=os.Getwd()
+	if err != nil {
+		return path
+	}
+	
+	relPath, err2 := filepath.Rel(wd, path)
+	if err2 != nil {
+		return path
+	}
+	
+	return relPath
+}
+
 func processFiles(files []string, transformations T) int {
-	first := true
 	count := 0
 	done := make(chan string, len(files))
 
 	for _, f := range files {
+
 		go func(filePath string) {
+			if verbose {
+				fmt.Printf("Check file %s\n", shortPath(filePath))
+			}
+
 			origDat, data := processFile(filePath, transformations)
-			if len(origDat) != len(data) {
-				if first && verbose {
-					fmt.Println("Apply transformations:")
-					first = false
-				}
+			if bytes.Compare(origDat, data) != 0 {
+
 				err := ioutil.WriteFile(filePath, data, 0644)
-				count++
 				if err != nil {
 					fmt.Printf("Error writting file %s\n", filePath)
 				}
+
+				count++
+
 				if verbose {
-					fmt.Printf("%s\n", filePath)
+					fmt.Printf("Updated file %s\n", shortPath(filePath))
 				}
+
+			} else if vverbose {
+				fmt.Printf("No update for %s\n", filePath)
 			}
 
 			done <- "ok"
@@ -69,7 +90,7 @@ func processFiles(files []string, transformations T) int {
 		<-done
 	}
 	if verbose {
-		fmt.Printf("Checked %v files\n", len(files))
+		fmt.Printf("---\n\nChecked %v files\n\n", len(files))
 	}
 	return count
 }
@@ -79,17 +100,26 @@ func processFile(filePath string, t T) ([]byte, []byte) {
 	var data []byte
 	for _, transf := range t.Transformations {
 		if checkFileName(filePath, transf) {
+			// Initialize the origine data the first time
 			if len(origDat) == 0 {
 				dat, err := ioutil.ReadFile(filePath)
 				if err != nil {
-					fmt.Printf("Error reading file %s\n", filePath)
+					fmt.Errorf("Error reading file %s\n", filePath)
 				}
 				data = dat
 				origDat = dat
 			}
 
+			// If preconditions matche then apply the transformations
 			if checkCondition(filePath, data, transf) {
+				if vverbose {
+					fmt.Printf("Apply tranformation to %s\n", filePath)
+				}
 				data = applyProcs(data, transf)
+			} else {
+				if vverbose {
+					fmt.Printf("%s doesn't match the preconditions\n", filePath)
+				}
 			}
 		}
 	}
