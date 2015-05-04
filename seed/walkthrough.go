@@ -20,12 +20,27 @@ import (
 
 func walkDir(root string, excludes string, tdfPath string) []string {
 	var files []string
+	if vverbose {
+		fmt.Println("Excluded packages:")
+	}
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if info.IsDir() {
-			if strings.Contains(excludes, info.Name()) {
-				return filepath.SkipDir
+			// Global exclusion of directories
+			for _, patt := range strings.Split(excludes, "|") {
+				match, err := filepath.Match(patt, filepath.Base(path))
+				if err != nil {
+					log.Fatalf("Failed to parse pattern: %s\n%v", excludes, err)
+				}
+				if match {
+					if vverbose {
+						fmt.Printf("\t%s\n", info.Name())
+					}
+					return filepath.SkipDir
+				}
 			}
 		} else {
+			// Construct the list of files to scan
+			// but skip the transformation file if present
 			if info.Name() != filepath.Base(tdfPath) {
 				files = append(files, path)
 			}
@@ -33,6 +48,11 @@ func walkDir(root string, excludes string, tdfPath string) []string {
 
 		return err
 	})
+	
+	if vverbose {
+		fmt.Println("---")
+	}
+	
 	if err != nil {
 		log.Fatalf("Problem walking to the file or directory:\n %v\n", err)
 	}

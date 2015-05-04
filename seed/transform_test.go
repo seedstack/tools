@@ -33,7 +33,7 @@ func (c *Conditions) AlwaysFalse(fileName string, data []byte) bool {
 func TestFile(t *testing.T) {
 	tg := Transformation{Filter: "*.go"}
 	tgy := Transformation{Filter: "*.go|*.yml"}
-	matched := checkFileName("test\\src\\bla\\bla\\cmd.go", tg) &&
+	matched := checkFileName("src\\it\\bla\\bla\\cmd.go", tg) &&
 		!checkFileName("./test/bloat.java.", tg)
 	if !matched {
 		t.Errorf("The file ./test/cmd.go should match the pattern '*.go' but not 'bloat.java'")
