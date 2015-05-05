@@ -15,6 +15,5 @@ before_install:
   - go get golang.org/x/tools/cmd/cover
 install: go get gopkg.in/yaml.v2
 script:
-  - $HOME/gopath/bin/goveralls -service=travis-ci
+  - $HOME/gopath/bin/goveralls -package ./seed -service=travis-ci
   - go test -cover ./seed
-  - go build ./seed
