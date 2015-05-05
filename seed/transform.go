@@ -186,6 +186,42 @@ func matchDependencyWithVersion(pom, old, new string) string {
 	return depRegex.ReplaceAllString(pom, "${1}"+newDep[0]+"${2}"+newDep[1]+"${3}"+newDep[2]+"${4}")
 }
 
+func matchDependencyWithVersionAndProps(pom, old, new string) string {
+	currentDep := strings.Split(old, ":")
+	newDep := strings.Split(new, ":")
+	
+	if len(currentDep) != 3 && len(newDep) != 3 {
+		log.Fatalf(`ReplaceMavenDependencyWithVersion takes dependencies with` + 
+			` the following format "groupId:artifactId:vesion". But "%s" and "%s" where found.`, old, new)
+	}
+
+	regex := "(<groupId>)" + regexp.QuoteMeta(currentDep[0]) + "(<\\/groupId>.*?\\n.*?" +
+		"<artifactId>)" + regexp.QuoteMeta(currentDep[1]) + "(<\\/artifactId>.*?\\n.*?" +
+		"<version>)(.*?)(<\\/version>)"
+
+	depRegex := regexp.MustCompile(regex)
+
+	propsDefinition := regexp.MustCompile("\\$\\{(.*?)\\}")
+	// Find the version of the dependency to replace
+	version := depRegex.FindStringSubmatch(pom)[4]
+	// Check if it is a property
+	match := propsDefinition.FindStringSubmatch(version)
+	fmt.Printf("match %v", match)
+	var props string
+	if match != nil {
+		props = match[1]
+	}
+	
+	if props != "" {
+		propsToReplace := regexp.MustCompile("(<" + regexp.QuoteMeta(props) + ">).*?(</" + regexp.QuoteMeta(props) + ">)")
+		pom = propsToReplace.ReplaceAllString(pom, "${1}"+newDep[2]+"${2}")
+		return depRegex.ReplaceAllString(pom, "${1}"+newDep[0]+"${2}"+newDep[1]+"${3}"+"${4}"+"${5}")
+	// "(<seed-bom\.version>).*?(<\/seed-bom\.version>)"	
+	} else {
+		return depRegex.ReplaceAllString(pom, "${1}"+newDep[0]+"${2}"+newDep[1]+"${3}"+newDep[2]+"${5}")
+	}
+}
+
 func matchDependency(pom, old, new string) string {
 	currentDep := strings.Split(old, ":")
 	newDep := strings.Split(new, ":")
@@ -201,4 +237,30 @@ func matchDependency(pom, old, new string) string {
 	depRegex := regexp.MustCompile(regex)
 
 	return depRegex.ReplaceAllString(pom, "${1}"+newDep[0]+"${2}"+newDep[1]+"${3}")
+}
+
+func matchDependencyAndRemoveVersion(pom, old, new string) string {
+	currentDep := strings.Split(old, ":")
+	newDep := strings.Split(new, ":")
+
+	if len(currentDep) != 2 && len(newDep) != 2 {
+		log.Fatalf(`ReplaceMavenDependencyWithVersion takes dependencies with` + 
+			` the following format "groupId:artifactId". But "%s" and "%s" where found.`, old, new)
+	}
+
+	regex := "(<groupId>)" + currentDep[0] + "(<\\/groupId>.*?\\n.*?" +
+		"<artifactId>)" + currentDep[1] + "(<\\/artifactId>.*?)\\n.*?" +
+		"<version>.*?<\\/version>"
+
+	depRegexWithVersion := regexp.MustCompile(regex)
+	if depRegexWithVersion.FindString(pom) != "" {
+			return depRegexWithVersion.ReplaceAllString(pom, "${1}"+newDep[0]+"${2}"+newDep[1]+"${3}")
+	} else {
+		regex := "(<groupId>)" + currentDep[0] + "(<\\/groupId>.*?\\n.*?" +
+			"<artifactId>)" + currentDep[1] + "(<\\/artifactId>)"
+
+		depRegex := regexp.MustCompile(regex)
+
+		return depRegex.ReplaceAllString(pom, "${1}"+newDep[0]+"${2}"+newDep[1]+"${3}")
+	}
 }

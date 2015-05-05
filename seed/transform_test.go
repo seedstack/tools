@@ -33,7 +33,7 @@ func (c *Conditions) AlwaysFalse(fileName string, data []byte) bool {
 func TestFile(t *testing.T) {
 	tg := Transformation{Filter: "*.go"}
 	tgy := Transformation{Filter: "*.go|*.yml"}
-	matched := checkFileName("src\\it\\bla\\bla\\cmd.go", tg) &&
+	matched := checkFileName("test\\src\\bla\\bla\\cmd.go", tg) &&
 		!checkFileName("./test/bloat.java.", tg)
 	if !matched {
 		t.Errorf("The file ./test/cmd.go should match the pattern '*.go' but not 'bloat.java'")
@@ -158,5 +158,82 @@ func TestReplaceMavenDependencyWithVersion(t *testing.T) {
 	news := string(p.ReplaceMavenDependencyWithVersion([]byte(pom), "com.inetpsa.fnd:seed-bom:14.11", "org.seedstack:bom:15.4", "org.seedstack:bom:15.4", "org.seedstack:seedstack-bom:15.4-M2-SNAPSHOT"))
 	if news != expectedPomWithVersion {
 		t.Errorf("Procedure should replace 'com.inetpsa.fnd:seed-bom:14.11' with 'org.seedstack:seedstack-bom:15.4-M2-SNAPSHOT' but found:\n %s", news)
+	}
+}
+
+var pomWithProperty = `
+    <properties>
+        <!-- blabla -->
+		<seed-bom.version>14.11.2</seed-bom.version>
+	</properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- SEED Distribution BOM-->
+            <dependency>
+                <groupId>com.inetpsa.fnd</groupId>  <!-- test ->
+               <artifactId>seed-bom</artifactId>
+                <version>${seed-bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+`
+
+var expectedPomWithProperty = `
+    <properties>
+        <!-- blabla -->
+		<seed-bom.version>15.4-M2-SNAPSHOT</seed-bom.version>
+	</properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- SEED Distribution BOM-->
+            <dependency>
+                <groupId>org.seedstack</groupId>  <!-- test ->
+               <artifactId>seedstack-bom</artifactId>
+                <version>${seed-bom.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+`
+
+func TestMatchDependencyWithVersionAndProps(t *testing.T) {
+	old := "com.inetpsa.fnd:seed-bom:14.11"
+	new := "org.seedstack:seedstack-bom:15.4-M2-SNAPSHOT"
+
+	result := matchDependencyWithVersionAndProps(pomWithProperty, old, new)
+	if result != expectedPomWithProperty {
+		fmt.Println("found:\n" + result)
+		t.Error("Fail to replace maven dependency with version")
+	}
+}
+
+var expectedPomWithRemovedVersion = `
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- SEED Distribution BOM-->
+            <dependency>
+                <groupId>org.seedstack</groupId>  <!-- test ->
+               <artifactId>seedstack-bom</artifactId>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+`
+
+func TestMatchDependencyWithRemovedVersion(t *testing.T) {
+	old := "com.inetpsa.fnd:seed-bom"
+	new := "org.seedstack:seedstack-bom"
+
+	result := matchDependencyAndRemoveVersion(pom, old, new)
+	if result != expectedPomWithRemovedVersion {
+		fmt.Println("found:\n" + result)
+		t.Error("Fail to replace maven dependency")
 	}
 }
