@@ -9,13 +9,13 @@
 package main
 
 import (
+	"bytes"
+	"fmt"
 	"log"
 	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
-	"bytes"
-	"fmt"
 )
 
 // Conditions regroup all the precondition methods
@@ -80,7 +80,7 @@ func (c *Conditions) AlwaysTrue(fileName string, data []byte) bool {
 // -----------------
 
 // Insert the string s at the end of the given data.
-// 
+//
 // proc:
 //  -
 //    name: Insert
@@ -90,7 +90,7 @@ func (p *Procedures) Insert(dat []byte, s string) []byte {
 }
 
 // Replace the old string by the new one. You can use it as follows in your transformation file.
-// 
+//
 // proc:
 //  -
 //    name: Replace
@@ -122,7 +122,7 @@ func (p *Procedures) Replace(dat []byte, pairs ...string) []byte {
 // </dependency>
 //
 // Call the ReplaceMavenDependency with a pair of the old dependency and the new one.
-// 
+//
 // proc:
 //  -
 //    name: ReplaceMavenDependency
@@ -150,7 +150,7 @@ func (p *Procedures) ReplaceMavenDependency(data []byte, pairs ...string) []byte
 // </dependency>
 //
 // Call the ReplaceMavenDependencyWithVersion with a pair of the old dependency and the new one.
-// 
+//
 // proc:
 //  -
 //    name: ReplaceMavenDependencyWithVersion
@@ -171,9 +171,9 @@ func (p *Procedures) ReplaceMavenDependencyWithVersion(data []byte, pairs ...str
 func matchDependencyWithVersion(pom, old, new string) string {
 	currentDep := strings.Split(old, ":")
 	newDep := strings.Split(new, ":")
-	
+
 	if len(currentDep) != 3 && len(newDep) != 3 {
-		log.Fatalf(`ReplaceMavenDependencyWithVersion takes dependencies with` + 
+		log.Fatalf(`ReplaceMavenDependencyWithVersion takes dependencies with`+
 			` the following format "groupId:artifactId:vesion". But "%s" and "%s" where found.`, old, new)
 	}
 
@@ -189,9 +189,9 @@ func matchDependencyWithVersion(pom, old, new string) string {
 func matchDependencyWithVersionAndProps(pom, old, new string) string {
 	currentDep := strings.Split(old, ":")
 	newDep := strings.Split(new, ":")
-	
+
 	if len(currentDep) != 3 && len(newDep) != 3 {
-		log.Fatalf(`ReplaceMavenDependencyWithVersion takes dependencies with` + 
+		log.Fatalf(`ReplaceMavenDependencyWithVersion takes dependencies with`+
 			` the following format "groupId:artifactId:vesion". But "%s" and "%s" where found.`, old, new)
 	}
 
@@ -211,12 +211,12 @@ func matchDependencyWithVersionAndProps(pom, old, new string) string {
 	if match != nil {
 		props = match[1]
 	}
-	
+
 	if props != "" {
 		propsToReplace := regexp.MustCompile("(<" + regexp.QuoteMeta(props) + ">).*?(</" + regexp.QuoteMeta(props) + ">)")
 		pom = propsToReplace.ReplaceAllString(pom, "${1}"+newDep[2]+"${2}")
 		return depRegex.ReplaceAllString(pom, "${1}"+newDep[0]+"${2}"+newDep[1]+"${3}"+"${4}"+"${5}")
-	// "(<seed-bom\.version>).*?(<\/seed-bom\.version>)"	
+		// "(<seed-bom\.version>).*?(<\/seed-bom\.version>)"
 	} else {
 		return depRegex.ReplaceAllString(pom, "${1}"+newDep[0]+"${2}"+newDep[1]+"${3}"+newDep[2]+"${5}")
 	}
@@ -227,7 +227,7 @@ func matchDependency(pom, old, new string) string {
 	newDep := strings.Split(new, ":")
 
 	if len(currentDep) != 2 && len(newDep) != 2 {
-		log.Fatalf(`ReplaceMavenDependencyWithVersion takes dependencies with` + 
+		log.Fatalf(`ReplaceMavenDependencyWithVersion takes dependencies with`+
 			` the following format "groupId:artifactId". But "%s" and "%s" where found.`, old, new)
 	}
 
@@ -244,7 +244,7 @@ func matchDependencyAndRemoveVersion(pom, old, new string) string {
 	newDep := strings.Split(new, ":")
 
 	if len(currentDep) != 2 && len(newDep) != 2 {
-		log.Fatalf(`ReplaceMavenDependencyWithVersion takes dependencies with` + 
+		log.Fatalf(`ReplaceMavenDependencyWithVersion takes dependencies with`+
 			` the following format "groupId:artifactId". But "%s" and "%s" where found.`, old, new)
 	}
 
@@ -254,7 +254,7 @@ func matchDependencyAndRemoveVersion(pom, old, new string) string {
 
 	depRegexWithVersion := regexp.MustCompile(regex)
 	if depRegexWithVersion.FindString(pom) != "" {
-			return depRegexWithVersion.ReplaceAllString(pom, "${1}"+newDep[0]+"${2}"+newDep[1]+"${3}")
+		return depRegexWithVersion.ReplaceAllString(pom, "${1}"+newDep[0]+"${2}"+newDep[1]+"${3}")
 	} else {
 		regex := "(<groupId>)" + currentDep[0] + "(<\\/groupId>.*?\\n.*?" +
 			"<artifactId>)" + currentDep[1] + "(<\\/artifactId>)"

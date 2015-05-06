@@ -52,7 +52,7 @@ func init() {
 	flag.BoolVar(&verbose, "v", false, "Enable verbose mode.")
 	flag.BoolVar(&vverbose, "vv", false, "Enable very verbose mode.")
 	flag.Parse()
-	
+
 	if vverbose {
 		verbose = true
 	}

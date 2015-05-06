@@ -9,13 +9,13 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
-	"bytes"
 )
 
 func walkDir(root string, excludes string, tdfPath string) []string {
@@ -48,11 +48,11 @@ func walkDir(root string, excludes string, tdfPath string) []string {
 
 		return err
 	})
-	
+
 	if vverbose {
 		fmt.Println("---")
 	}
-	
+
 	if err != nil {
 		log.Fatalf("Problem walking to the file or directory:\n %v\n", err)
 	}
@@ -60,16 +60,16 @@ func walkDir(root string, excludes string, tdfPath string) []string {
 }
 
 func shortPath(path string) string {
-	wd, err :=os.Getwd()
+	wd, err := os.Getwd()
 	if err != nil {
 		return path
 	}
-	
+
 	relPath, err2 := filepath.Rel(wd, path)
 	if err2 != nil {
 		return path
 	}
-	
+
 	return relPath
 }
 
