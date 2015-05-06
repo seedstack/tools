@@ -170,7 +170,7 @@ func matchDependency(pom, old, new string) string {
 	switch {
 	case len(currentDep) == 2 && len(newDep) == 2:
 		depRegex := regexp.MustCompile("(<groupId>)" + currentDep[0] + "(<\\/groupId>.*?\\n.*?" +
-		"<artifactId>)" + currentDep[1] + "(<\\/artifactId>)")
+			"<artifactId>)" + currentDep[1] + "(<\\/artifactId>)")
 
 		res = depRegex.ReplaceAllString(pom, "${1}"+newDep[0]+"${2}"+newDep[1]+"${3}")
 
@@ -179,6 +179,10 @@ func matchDependency(pom, old, new string) string {
 
 	case len(currentDep) == 3 && currentDep[2] == "*" && len(newDep) == 2:
 		res = matchDependencyAndRemoveVersion(pom, old, new)
+
+	default:
+		log.Fatalf(`The expected formats for dependencies are: "xx:xx", "xx:xx:xx" or "xx:xx:*". `+
+			"But found:\n- %s\n - %s", old, new)
 	}
 	return res
 }
@@ -213,7 +217,7 @@ func matchDependencyWithVersion(pom, old, new string) string {
 		propsToReplace := regexp.MustCompile("(<" + regexp.QuoteMeta(props) + ">).*?(</" + regexp.QuoteMeta(props) + ">)")
 		pom = propsToReplace.ReplaceAllString(pom, "${1}"+newDep[2]+"${2}")
 		return depRegex.ReplaceAllString(pom, "${1}"+newDep[0]+"${2}"+newDep[1]+"${3}"+"${4}"+"${5}")
-	} 
+	}
 
 	return depRegex.ReplaceAllString(pom, "${1}"+newDep[0]+"${2}"+newDep[1]+"${3}"+newDep[2]+"${5}")
 }
@@ -223,7 +227,7 @@ func matchDependencyAndRemoveVersion(pom, old, new string) string {
 	newDep := strings.Split(new, ":")
 
 	if len(currentDep) != 2 && len(newDep) != 2 {
-		log.Fatalf("ReplaceMavenDependency expects the following format \"groupId:artifactId\".\n" +
+		log.Fatalf("ReplaceMavenDependency expects the following format \"groupId:artifactId\".\n"+
 			" But \"%s\" and \"%s\" where found.\n", old, new)
 	}
 

@@ -34,7 +34,7 @@ func TestWalkDir(t *testing.T) {
 }
 
 func TestShortPath(t *testing.T) {
-	originalPath := filepath.Join("..","test","dir1","file21")
+	originalPath := filepath.Join("..", "test", "dir1", "file21")
 	sp := shortPath(expectedFile)
 
 	if sp != originalPath {
@@ -48,7 +48,7 @@ func TestProcessFiles(t *testing.T) {
 	tf := Transformation{Filter: "*.go", Proc: p}
 	filesToCheck := []string{"../test/file1", "../test/file1", "../test/file2"}
 	expectedCount := 2
-	
+
 	modifiedFiles := processFiles(filesToCheck, T{Transformations: []Transformation{tt, tf}})
 
 	if modifiedFiles != expectedCount {

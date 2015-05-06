@@ -13,7 +13,9 @@ before_install:
   - go get github.com/axw/gocov/gocov
   - go get github.com/mattn/goveralls
   - go get golang.org/x/tools/cmd/cover
-install: go get gopkg.in/yaml.v2
+install: 
+  - go get gopkg.in/yaml.v2
+  - go get github.com/BurntSushi/toml
 script:
   - $HOME/gopath/bin/goveralls -package ./seed -service=travis-ci
   - go test -cover ./seed
