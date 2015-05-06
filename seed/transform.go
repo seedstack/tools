@@ -89,6 +89,11 @@ func (p *Procedures) Insert(dat []byte, s string) []byte {
 	return append(dat, []byte(s)...)
 }
 
+func (p *Procedures) RemoveAtEnd(dat []byte, s string) []byte {
+	fmt.Errorf("dat len: %s, s len: %s", len(dat), len(s))
+	return dat[:len(dat)-len([]byte(s))]
+}
+
 // Replace the old string by the new one. You can use it as follows in your transformation file.
 //
 // proc:
@@ -216,10 +221,9 @@ func matchDependencyWithVersionAndProps(pom, old, new string) string {
 		propsToReplace := regexp.MustCompile("(<" + regexp.QuoteMeta(props) + ">).*?(</" + regexp.QuoteMeta(props) + ">)")
 		pom = propsToReplace.ReplaceAllString(pom, "${1}"+newDep[2]+"${2}")
 		return depRegex.ReplaceAllString(pom, "${1}"+newDep[0]+"${2}"+newDep[1]+"${3}"+"${4}"+"${5}")
-		// "(<seed-bom\.version>).*?(<\/seed-bom\.version>)"
-	} else {
-		return depRegex.ReplaceAllString(pom, "${1}"+newDep[0]+"${2}"+newDep[1]+"${3}"+newDep[2]+"${5}")
-	}
+	} 
+
+	return depRegex.ReplaceAllString(pom, "${1}"+newDep[0]+"${2}"+newDep[1]+"${3}"+newDep[2]+"${5}")
 }
 
 func matchDependency(pom, old, new string) string {
@@ -255,12 +259,12 @@ func matchDependencyAndRemoveVersion(pom, old, new string) string {
 	depRegexWithVersion := regexp.MustCompile(regex)
 	if depRegexWithVersion.FindString(pom) != "" {
 		return depRegexWithVersion.ReplaceAllString(pom, "${1}"+newDep[0]+"${2}"+newDep[1]+"${3}")
-	} else {
-		regex := "(<groupId>)" + currentDep[0] + "(<\\/groupId>.*?\\n.*?" +
-			"<artifactId>)" + currentDep[1] + "(<\\/artifactId>)"
-
-		depRegex := regexp.MustCompile(regex)
-
-		return depRegex.ReplaceAllString(pom, "${1}"+newDep[0]+"${2}"+newDep[1]+"${3}")
 	}
+
+	regex = "(<groupId>)" + currentDep[0] + "(<\\/groupId>.*?\\n.*?" +
+		"<artifactId>)" + currentDep[1] + "(<\\/artifactId>)"
+
+	depRegex := regexp.MustCompile(regex)
+
+	return depRegex.ReplaceAllString(pom, "${1}"+newDep[0]+"${2}"+newDep[1]+"${3}")
 }

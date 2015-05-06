@@ -10,8 +10,16 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"testing"
 )
+
+func TestMain(m *testing.M) {
+	verbose = true
+	vverbose = true
+	res := m.Run()
+	os.Exit(res)
+}
 
 func TestPrecondition(t *testing.T) {
 	tt := Transformation{Pre: []string{"AlwaysTrue"}}
@@ -72,6 +80,21 @@ func TestReplace(t *testing.T) {
 	news := string(p.Replace([]byte("foo"), "foo", "bar", "bar", "toto"))
 	if news != "toto" {
 		t.Errorf("Procedure should replace 'foo' with 'toto' but %s was found\n", news)
+	}
+}
+
+func TestInsertAndRemove(t *testing.T) {
+	var p *Procedures
+	ori := []byte("foo")
+	
+	inc := p.Insert(ori, "bar")
+	if  string(inc) != "foobar" {
+		t.Errorf("removeAtEnd: %s was expected but found %s", "foobar", inc)
+	}
+
+	clean := string(p.RemoveAtEnd(inc, "bar"))
+	if clean != "foo" {
+		t.Errorf("removeAtEnd: %s was expected but found %s", ori, clean)
 	}
 }
 
