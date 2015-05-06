@@ -169,7 +169,7 @@ func TestMatchDependencyWithVersion(t *testing.T) {
 	old := "com.inetpsa.fnd:seed-bom:14.11"
 	new := "org.seedstack:seedstack-bom:15.4-M2-SNAPSHOT"
 
-	result := matchDependencyWithVersion(pom, old, new)
+	result := matchDependency(pom, old, new)
 	if result != expectedPomWithVersion {
 		fmt.Println("found:\n" + result)
 		t.Error("Fail to replace maven dependency with version")
@@ -178,7 +178,7 @@ func TestMatchDependencyWithVersion(t *testing.T) {
 
 func TestReplaceMavenDependencyWithVersion(t *testing.T) {
 	var p *Procedures
-	news := string(p.ReplaceMavenDependencyWithVersion([]byte(pom), "com.inetpsa.fnd:seed-bom:14.11", "org.seedstack:bom:15.4", "org.seedstack:bom:15.4", "org.seedstack:seedstack-bom:15.4-M2-SNAPSHOT"))
+	news := string(p.ReplaceMavenDependency([]byte(pom), "com.inetpsa.fnd:seed-bom:14.11", "org.seedstack:bom:15.4", "org.seedstack:bom:15.4", "org.seedstack:seedstack-bom:15.4-M2-SNAPSHOT"))
 	if news != expectedPomWithVersion {
 		t.Errorf("Procedure should replace 'com.inetpsa.fnd:seed-bom:14.11' with 'org.seedstack:seedstack-bom:15.4-M2-SNAPSHOT' but found:\n %s", news)
 	}
@@ -228,7 +228,7 @@ func TestMatchDependencyWithVersionAndProps(t *testing.T) {
 	old := "com.inetpsa.fnd:seed-bom:14.11"
 	new := "org.seedstack:seedstack-bom:15.4-M2-SNAPSHOT"
 
-	result := matchDependencyWithVersionAndProps(pomWithProperty, old, new)
+	result := matchDependency(pomWithProperty, old, new)
 	if result != expectedPomWithProperty {
 		fmt.Println("found:\n" + result)
 		t.Error("Fail to replace maven dependency with version")
@@ -251,12 +251,12 @@ var expectedPomWithRemovedVersion = `
 `
 
 func TestMatchDependencyWithRemovedVersion(t *testing.T) {
-	old := "com.inetpsa.fnd:seed-bom"
+	old := "com.inetpsa.fnd:seed-bom:*"
 	new := "org.seedstack:seedstack-bom"
 
-	result := matchDependencyAndRemoveVersion(pom, old, new)
+	result := matchDependency(pom, old, new)
 	if result != expectedPomWithRemovedVersion {
 		fmt.Println("found:\n" + result)
-		t.Error("Fail to replace maven dependency")
+		t.Error("Fail to replace maven dependency and removing its version")
 	}
 }

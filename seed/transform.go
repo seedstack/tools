@@ -90,7 +90,6 @@ func (p *Procedures) Insert(dat []byte, s string) []byte {
 }
 
 func (p *Procedures) RemoveAtEnd(dat []byte, s string) []byte {
-	fmt.Errorf("dat len: %s, s len: %s", len(dat), len(s))
 	return dat[:len(dat)-len([]byte(s))]
 }
 
@@ -135,9 +134,27 @@ func (p *Procedures) Replace(dat []byte, pairs ...string) []byte {
 //      - "org.mycompany:myApp1"
 //      - "com.mycompany:myApp2"
 //      # After you can add other pairs
-//      - "x:x"
-//      - "y:y"
+//      - "xx:xx"
+//      - "yy:yy"
 //      ...
+//
+// Accepted formats for dependencies
+//
+// Replace groupId and artifactId:
+//  - "xx:xx"
+//  - "yy:yy
+//
+// Replace groupId, artifactId and version:
+//  - "xx:xx:xx"
+//  - "xx:xx:xx"
+//
+// NB: It also includes the where the version is specify
+// as a property in the same file.
+//
+// Replace groupId and artifactId and remove the version:
+//  - "xx:xx:*"
+//  - "yy:yy
+//
 func (p *Procedures) ReplaceMavenDependency(data []byte, pairs ...string) []byte {
 	for i := 0; i < len(pairs); i += 2 {
 		data = []byte(matchDependency(string(data), pairs[i], pairs[i+1]))
@@ -145,32 +162,25 @@ func (p *Procedures) ReplaceMavenDependency(data []byte, pairs ...string) []byte
 	return data
 }
 
-// ReplaceMavenDependencyWithVersion replaces a maven dependency by a new one including the version tag.
-// The dependency to update are passed as pairs. For instance you want to update the following dependency:
-//
-// <dependency>
-//   <groupId>org.mycompany</groupId>
-//   <artifactId>myApp1</artifactId>
-//   <version>1.0.0</version>
-// </dependency>
-//
-// Call the ReplaceMavenDependencyWithVersion with a pair of the old dependency and the new one.
-//
-// proc:
-//  -
-//    name: ReplaceMavenDependencyWithVersion
-//    params:
-//      - "org.mycompany:myApp1:1.0.0"
-//      - "com.mycompany:myApp2:2.0.0"
-//      # After you can add other pairs
-//      - "x:x:x"
-//      - "y:y:y"
-//      ...
-func (p *Procedures) ReplaceMavenDependencyWithVersion(data []byte, pairs ...string) []byte {
-	for i := 0; i < len(pairs); i += 2 {
-		data = []byte(matchDependencyWithVersion(string(data), pairs[i], pairs[i+1]))
+func matchDependency(pom, old, new string) string {
+	currentDep := strings.Split(old, ":")
+	newDep := strings.Split(new, ":")
+
+	var res string
+	switch {
+	case len(currentDep) == 2 && len(newDep) == 2:
+		depRegex := regexp.MustCompile("(<groupId>)" + currentDep[0] + "(<\\/groupId>.*?\\n.*?" +
+		"<artifactId>)" + currentDep[1] + "(<\\/artifactId>)")
+
+		res = depRegex.ReplaceAllString(pom, "${1}"+newDep[0]+"${2}"+newDep[1]+"${3}")
+
+	case len(currentDep) == 3 && len(newDep) == 3:
+		res = matchDependencyWithVersion(pom, old, new)
+
+	case len(currentDep) == 3 && currentDep[2] == "*" && len(newDep) == 2:
+		res = matchDependencyAndRemoveVersion(pom, old, new)
 	}
-	return data
+	return res
 }
 
 func matchDependencyWithVersion(pom, old, new string) string {
@@ -178,26 +188,8 @@ func matchDependencyWithVersion(pom, old, new string) string {
 	newDep := strings.Split(new, ":")
 
 	if len(currentDep) != 3 && len(newDep) != 3 {
-		log.Fatalf(`ReplaceMavenDependencyWithVersion takes dependencies with`+
-			` the following format "groupId:artifactId:vesion". But "%s" and "%s" where found.`, old, new)
-	}
-
-	regex := "(<groupId>)" + currentDep[0] + "(<\\/groupId>.*?\\n.*?" +
-		"<artifactId>)" + currentDep[1] + "(<\\/artifactId>.*?\\n.*?" +
-		"<version>)" + currentDep[2] + "(<\\/version>)"
-
-	depRegex := regexp.MustCompile(regex)
-
-	return depRegex.ReplaceAllString(pom, "${1}"+newDep[0]+"${2}"+newDep[1]+"${3}"+newDep[2]+"${4}")
-}
-
-func matchDependencyWithVersionAndProps(pom, old, new string) string {
-	currentDep := strings.Split(old, ":")
-	newDep := strings.Split(new, ":")
-
-	if len(currentDep) != 3 && len(newDep) != 3 {
-		log.Fatalf(`ReplaceMavenDependencyWithVersion takes dependencies with`+
-			` the following format "groupId:artifactId:vesion". But "%s" and "%s" where found.`, old, new)
+		log.Fatalf(`ReplaceMavenDependency expects`+
+			` the following format "groupId:artifactId:vesion".\n But "%s" and "%s" where found.\n`, old, new)
 	}
 
 	regex := "(<groupId>)" + regexp.QuoteMeta(currentDep[0]) + "(<\\/groupId>.*?\\n.*?" +
@@ -226,30 +218,13 @@ func matchDependencyWithVersionAndProps(pom, old, new string) string {
 	return depRegex.ReplaceAllString(pom, "${1}"+newDep[0]+"${2}"+newDep[1]+"${3}"+newDep[2]+"${5}")
 }
 
-func matchDependency(pom, old, new string) string {
-	currentDep := strings.Split(old, ":")
-	newDep := strings.Split(new, ":")
-
-	if len(currentDep) != 2 && len(newDep) != 2 {
-		log.Fatalf(`ReplaceMavenDependencyWithVersion takes dependencies with`+
-			` the following format "groupId:artifactId". But "%s" and "%s" where found.`, old, new)
-	}
-
-	regex := "(<groupId>)" + currentDep[0] + "(<\\/groupId>.*?\\n.*?" +
-		"<artifactId>)" + currentDep[1] + "(<\\/artifactId>)"
-
-	depRegex := regexp.MustCompile(regex)
-
-	return depRegex.ReplaceAllString(pom, "${1}"+newDep[0]+"${2}"+newDep[1]+"${3}")
-}
-
 func matchDependencyAndRemoveVersion(pom, old, new string) string {
 	currentDep := strings.Split(old, ":")
 	newDep := strings.Split(new, ":")
 
 	if len(currentDep) != 2 && len(newDep) != 2 {
-		log.Fatalf(`ReplaceMavenDependencyWithVersion takes dependencies with`+
-			` the following format "groupId:artifactId". But "%s" and "%s" where found.`, old, new)
+		log.Fatalf("ReplaceMavenDependency expects the following format \"groupId:artifactId\".\n" +
+			" But \"%s\" and \"%s\" where found.\n", old, new)
 	}
 
 	regex := "(<groupId>)" + currentDep[0] + "(<\\/groupId>.*?\\n.*?" +
