@@ -19,6 +19,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"os"
+	"bufio"
 )
 
 const (
@@ -105,13 +107,16 @@ func init() {
 }
 
 func main() {
-	if flag.Arg(0) == "fix" {
+	switch flag.Arg(0) {
+	case "fix":
 		fix()
-	} else if flag.Arg(0) == "help" {
+	case "convert":
+		convertTdf(flag.Arg(1), flag.Arg(2))
+	case "help":
 		if flag.Arg(1) == "fix" {
 			fmt.Println(fixHelp)
 		}
-	} else {
+	default:
 		fmt.Println(seedHelp)
 	}
 }
@@ -159,16 +164,16 @@ func getFormat(name string) (string, error) {
 
 	var ext string
 	var err error
+
 	switch extension {
-	case "yml":
-		ext = "yml"
-	case "yaml":
+	case "yml", "yaml":
 		ext = "yml"
 	case "toml":
 		ext = "toml"
 	default:
 		err = fmt.Errorf("%s format unsupported", extension)
 	}
+
 	return ext, err
 }
 
@@ -212,7 +217,7 @@ func parseTdf(dat []byte, format string) T {
 	case "yml":
 		err := yaml.Unmarshal(dat, &t)
 		if err != nil {
-			log.Fatal("Failed to parse the yaml file: %s", err)
+			log.Fatalf("Failed to parse the yaml file: %s", err)
 		}
 	case "toml":
 		err := toml.Unmarshal(dat, &t)
@@ -221,4 +226,41 @@ func parseTdf(dat []byte, format string) T {
 		}
 	}
 	return t
+}
+
+func convertTdf(path, newFormat string) {
+	index := strings.LastIndex(path, ".") + 1
+	format, err := getFormat(path[index:])
+	if err != nil {
+		log.Fatalf("Unsupported format for %s", path)
+	}
+	
+	bytes, err := ioutil.ReadFile(path)
+	if err != nil {
+		log.Fatal("Unable to read the transformation description file.\n", err)
+	}
+	var t T
+	var res []byte
+
+	f, err := os.Create(path[:index] + "toml")
+	if err != nil {
+		log.Fatal(err)
+	}
+	
+	writer := bufio.NewWriter(f)
+	
+	if newFormat == "toml" && (format == "yaml" || format == "yml") {
+		err := yaml.Unmarshal(bytes, &t)
+		if err != nil {
+			log.Fatalf("Failed to parse the yaml file: %s", err)
+		}
+
+		if err = toml.NewEncoder(writer).Encode(t); err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		log.Fatalf("%s format is not supported for convertion", format)
+	}
+	
+	ioutil.WriteFile(path[:index], res, 0666)
 }
