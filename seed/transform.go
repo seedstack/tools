@@ -203,23 +203,31 @@ func matchDependencyWithVersion(pom, old, new string) string {
 	depRegex := regexp.MustCompile(regex)
 
 	propsDefinition := regexp.MustCompile("\\$\\{(.*?)\\}")
-	// Find the version of the dependency to replace
-	version := depRegex.FindStringSubmatch(pom)[4]
-	// Check if it is a property
-	match := propsDefinition.FindStringSubmatch(version)
-	fmt.Printf("match %v", match)
-	var props string
-	if match != nil {
-		props = match[1]
-	}
+	
+	submatch := depRegex.FindStringSubmatch(pom)
+	if len(submatch) == 6 {
+		// Find the version of the dependency to replace
+		version := submatch[4]
+		// Check if it is a property
+		match := propsDefinition.FindStringSubmatch(version)
+		fmt.Printf("match %v", match)
+		var props string
+		if match != nil {
+			props = match[1]
+		}
 
-	if props != "" {
-		propsToReplace := regexp.MustCompile("(<" + regexp.QuoteMeta(props) + ">).*?(</" + regexp.QuoteMeta(props) + ">)")
-		pom = propsToReplace.ReplaceAllString(pom, "${1}"+newDep[2]+"${2}")
-		return depRegex.ReplaceAllString(pom, "${1}"+newDep[0]+"${2}"+newDep[1]+"${3}"+"${4}"+"${5}")
-	}
+		if props != "" {
+			propsToReplace := regexp.MustCompile("(<" + regexp.QuoteMeta(props) + ">).*?(</" + regexp.QuoteMeta(props) + ">)")
+			pom = propsToReplace.ReplaceAllString(pom, "${1}"+newDep[2]+"${2}")
+			return depRegex.ReplaceAllString(pom, "${1}"+newDep[0]+"${2}"+newDep[1]+"${3}"+"${4}"+"${5}")
+		}
 
-	return depRegex.ReplaceAllString(pom, "${1}"+newDep[0]+"${2}"+newDep[1]+"${3}"+newDep[2]+"${5}")
+		return depRegex.ReplaceAllString(pom, "${1}"+newDep[0]+"${2}"+newDep[1]+"${3}"+newDep[2]+"${5}")
+		
+	} else {
+		// The dependency was not found. Do nothing
+		return pom
+	}
 }
 
 func matchDependencyAndRemoveVersion(pom, old, new string) string {

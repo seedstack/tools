@@ -141,6 +141,16 @@ func TestMatchDependency(t *testing.T) {
 	}
 }
 
+func TestMatchInexistentDependency(t *testing.T) {
+	old := "com.inetpsa.fnd:seedbom:zzz"
+	new := "org.seedstack:seedstack-bom:yyy"
+
+	result := matchDependency(pom, old, new)
+	if result != pom {
+		t.Error("Don't update pom when the dep doesn't match:\n - orig\n%s- updated\n%s", pom, result)
+	}
+}
+
 var expectedPomWithVersion = `
 
     <dependencyManagement>
