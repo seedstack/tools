@@ -152,10 +152,19 @@ func fix() {
 		dirPath = absPath
 	}
 
-	count := processFiles(walkDir(dirPath, transf.Exclude, tdfPath), transf)
+	files := walkDir(dirPath, transf.Exclude, tdfPath)
+	count := processFiles(files, transf)
 
 	elapsed := time.Since(start)
-	fmt.Printf("%s %s fixed: %v files\n", filepath.Base(dirPath), elapsed, count)
+	var shortDirPath = filepath.Base(dirPath)
+	if shortDirPath == "." {
+		wd, err := os.Getwd()
+		if err != nil {
+			log.Fatalf("Failed to get current dir: %s", err)
+		}
+		shortDirPath = filepath.Base(wd)
+	}
+	fmt.Printf("\n%s fixed %v/%v files in %s\n", shortDirPath, count, len(files), elapsed)
 }
 
 func getFormat(name string) (string, error) {

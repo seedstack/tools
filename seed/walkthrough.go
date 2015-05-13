@@ -24,6 +24,9 @@ func walkDir(root string, excludes string, tdfPath string) []string {
 		fmt.Println("Excluded packages:")
 	}
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			log.Fatalf("Failed to walk in %s due to: %s", path, err)
+		}
 		if info.IsDir() {
 			// Global exclusion of directories
 			for _, patt := range strings.Split(excludes, "|") {

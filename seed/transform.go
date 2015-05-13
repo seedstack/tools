@@ -210,7 +210,7 @@ func matchDependencyWithVersion(pom, old, new string) string {
 		version := submatch[4]
 		// Check if it is a property
 		match := propsDefinition.FindStringSubmatch(version)
-		fmt.Printf("match %v", match)
+
 		var props string
 		if match != nil {
 			props = match[1]
