@@ -2,39 +2,46 @@ SeedStack tools
 ====
 [![Build status](https://travis-ci.org/seedstack/tools.svg?branch=master)](https://travis-ci.org/seedstack/tools) [![Coverage Status](https://coveralls.io/repos/seedstack/tools/badge.svg?branch=master)](https://coveralls.io/r/seedstack/tools?branch=master)
 
-Tool to perform common tasks on SEED projects.
+Tool to perform common tasks on SEED projects. The main provided
+command is `seed fix`. Type `seed help fix` to see a more detailed
+documentation.
 
-# Install
+# Download
+
+Download the [latest version](https://github.com/seedstack/tools/releases).
+
+# Install from source
+
+The following assumes you have Go properly installed and that you have
+`$GOPATH/bin` in your `PATH`.
 
 ```bash
 go get github.com/seedstack/tools/seed
+seed
 ```
-
-The following assumes you have Go properly installed and that you have `$GOPATH/bin` in your `PATH`.
 
 # Usage
 
-Apply the transformations described in the `tdf.yml` file to the
-current directory. Use the `-t` option of the `fix` subcommand.
+Apply the transformations described in the `transform.toml` file to
+the current directory. Use the `-t` option of the `fix` subcommand.
 
 ```bash
-cd $GOPATH/src/github.com/seedstack/tools/test
-seed -t tdf.yml fix
+seed -t transform.toml fix
 ```
 
 You can specify the directory where to apply the transformations:
 
 ```bash
-cd $GOPATH/src/github.com/seedstack/tools
-seed -t ./test/tdf.yml fix ./test
+seed -t ./test/transform.toml fix ./myproject
 ```
 
-You can retrieve the transformation descriptor from HTTP:
+You can also retrieve the transformation file from HTTP:
 
 ```bash
-cd $GOPATH/src/github.com/seedstack/tools/test
 seed -t https://raw.githubusercontent.com/seedstack/tools/master/seed/tdf.yml fix
 ```
 
 # Copyright and license
-Code and documentation copyright 2013-2015 The SeedStack authors, released under the MPL 2.0 license.
+
+Code and documentation copyright 2013-2015 The SeedStack authors,
+released under the MPL 2.0 license.

@@ -24,45 +24,56 @@ import (
 )
 
 const (
-	fixHelp = `Fix the files in a given directory based on a YAML transformation description file. 
-If no directory is passed as argument, the transformations will be applied on current directory.
+	fixHelp = `Usage: seed [flags] fix [directory/to/transform]
 
-Usage: 
-  seed [flags] fix [directory/to/transform]
+Fix the files in a given directory, based on a transformation file. If no directory 
+is passed as argument, the transformations will be applied in current directory.
 
 Available flags:
- -t file/path.yml: the YAML transformation description file
+ -t file/path.yml  the YAML transformation file
+ -v                verbose mode
+ -vv               very verbose mode
 
-YAML transformation description file format:
+Transformation file:
 
-The description file accepts a list of transformation. Each transformation can have include files or exclude directories. 
-It can also use higher level preconditions with "pre" which uses the file content. Finally, it takes a list of procedure to apply the file. 
-Procedures are described with their name and the arguments to pass. See the following 'tdf.yaml' file as example. 
+The description file can be in YAML or TOML. It accepts a list of transformations.
+Transformation contains filter based on the file name, but they can also use higher
+order precondition based on the file content. Finally, it takes a list of procedures
+to apply on the file. Procedures are described with a name and a list of arguments.
+This files also accepts global exclusions based on directory names. The directories 
+to exclude are separated by "|".
 
-tdf.yml
+Sample of YAML transformation file.
+
 ----------------
-- 
- Include: "*.go|*.yml"
- Exclude: "*.out"
- pre: 
-  - AlwaysTrue
-  - ...
- proc:
-  - Replace
-   Name: Replace
-   Params:
-    - "old"
-    - "new"
-  - ...
--
- ...
+exclude: "target|.git"
+transformations:
+ -
+  filter: "pom.xml"
+  pre: 
+    - AlwaysTrue
+    - ...
+  proc:
+    -
+      name: Replace
+      params:
+        - "old"
+        - "new"
+    - 
+      ...
+ -
+  ...
 ----------------
+
+A convert method exists to convert yaml into toml see "seed convert [file] [format]".
 `
 	seedHelp = `Usage: seed <command> <args>
 
 Commands:
-    fix    Apply source transformation on a directory, based on a YAML transformation file
-    help   Provide help for seed commands 
+    fix      Apply source transformations on a directory
+    convert  Convert a yaml transformation file into toml
+    help     Provide help for seed commands 
+    version  Show the seed tool version
 
 See 'seed help <command>' to read about a specific subcommand.
 `
@@ -116,6 +127,8 @@ func main() {
 		if flag.Arg(1) == "fix" {
 			fmt.Println(fixHelp)
 		}
+	case "version":
+		fmt.Println("Seed Tool v0.1")
 	default:
 		fmt.Println(seedHelp)
 	}
